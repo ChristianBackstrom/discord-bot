@@ -50,7 +50,7 @@ client.on("messageCreate", (message) => {
     meow()
       .then(async (url) => {
         let imageEmbed = new Discord.MessageEmbed()
-          .setTitle("Cat")
+          .setTitle("Here you have a cat!")
           .setImage(url);
         await message.channel.send({ embeds: [imageEmbed] });
       })
