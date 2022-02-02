@@ -5,6 +5,14 @@ const voice = require("@discordjs/voice");
 const dotenv = require("dotenv");
 const meow = require("random-meow");
 
+let width = 5;
+let height = 5;
+
+let positionX = 1;
+let positionY = 1;
+
+let gridData;
+
 dotenv.config();
 
 const client = new Discord.Client({
@@ -13,6 +21,7 @@ const client = new Discord.Client({
     Discord.Intents.FLAGS.GUILD_MESSAGES,
     Discord.Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
     Discord.Intents.FLAGS.GUILD_VOICE_STATES,
+    Discord.Intents.FLAGS.GUILD_EMOJIS_AND_STICKERS,
   ],
 });
 
@@ -42,6 +51,13 @@ client.on("messageCreate", (message) => {
     );
   }
 
+  if (command === "simonpussy") {
+    playAudio(
+      message,
+      "https://cdn.discordapp.com/attachments/781497108431503380/788103243808768030/SimonsFetaPussy.mp3"
+    );
+  }
+
   if (command === "yt") {
     distube.play(message.member.voice.channel, args.join());
   }
@@ -55,6 +71,120 @@ client.on("messageCreate", (message) => {
         await message.channel.send({ embeds: [imageEmbed] });
       })
       .catch(console.error);
+  }
+
+  if (command === "gengrid") {
+    if (args[0] && args[1]) {
+      width = args[0];
+      height = args[1];
+    }
+    let grid = updateGrid();
+    message.channel.send(grid).then((message) => {
+      message
+        .react("⬅️")
+        .then(() => message.react("⬆️"))
+        .then(() => message.react("⬇️"))
+        .then(() => message.react("➡️"));
+      gridData = message;
+    });
+  }
+});
+
+function move(direction) {
+  if (direction === "up") {
+    if (positionY <= 1) {
+      positionY = height;
+    } else {
+      positionY--;
+    }
+    let grid = updateGrid();
+    gridData.edit(grid);
+  }
+
+  if (direction === "down") {
+    if (positionY >= height) {
+      positionY = 1;
+    } else {
+      positionY++;
+    }
+    let grid = updateGrid();
+    gridData.edit(grid);
+  }
+
+  if (direction === "right") {
+    if (positionX >= width) {
+      positionY = 1;
+    } else {
+      positionX++;
+    }
+    let grid = updateGrid();
+    gridData.edit(grid);
+  }
+
+  if (direction === "left") {
+    if (positionX <= 1) {
+      positionX = width;
+    } else {
+      positionX--;
+    }
+    let grid = updateGrid();
+    gridData.edit(grid);
+  }
+}
+
+client.on("messageReactionAdd", (reaction, user) => {
+  const guild = client.guilds.cache.get(gridData.guildId);
+
+  const channel = guild.channels.cache.get(gridData.channelId);
+
+  try {
+    const cacheMessage = true;
+    const skipCache = true;
+    const fetchedMessage = channel.messages.fetch(
+      gridData.id,
+      cacheMessage,
+      skipCache
+    );
+
+    if (reaction.emoji.name === "⬆️") {
+      move("up");
+    } else if (reaction.emoji.name === "⬇️") {
+      move("down");
+    } else if (reaction.emoji.name === "➡️") {
+      move("right");
+    } else if (reaction.emoji.name === "⬅️") {
+      move("left");
+    }
+  } catch (error) {
+    console.error(error);
+  }
+});
+
+client.on("messageReactionRemove", (reaction, user) => {
+  const guild = client.guilds.cache.get(gridData.guildId);
+
+  const channel = guild.channels.cache.get(gridData.channelId);
+
+  try {
+    const cacheMessage = true;
+    const skipCache = true;
+    const fetchedMessage = channel.messages.fetch(
+      gridData.id,
+      cacheMessage,
+      skipCache
+    );
+
+    if (reaction.emoji.name === "⬆️") {
+      move("up");
+    } else if (reaction.emoji.name === "⬇️") {
+      move("down");
+    } else if (reaction.emoji.name === "➡️") {
+      move("right");
+    } else if (reaction.emoji.name === "⬅️") {
+      move("left");
+    }
+  } catch (error) {
+    console.error(error);
   }
 });
 
@@ -79,6 +209,21 @@ function playAudio(message, audioResource) {
   player.on(voice.AudioPlayerStatus.Idle, () => {
     connection.destroy();
   });
+}
+
+function updateGrid() {
+  let grid = "";
+  for (let y = 1; y <= height; y++) {
+    for (let x = 1; x <= width; x++) {
+      if (x == positionX && y == positionY) {
+        grid += ":one:";
+      } else {
+        grid += ":zero:";
+      }
+    }
+    grid += "\n";
+  }
+  return grid;
 }
 
 client.login(process.env.DISCORD_BOT_TOKEN);
